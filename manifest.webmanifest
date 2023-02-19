@@ -1,0 +1,13 @@
+{
+    "name": "bear in FOREST",
+    "start_url": "index.html",
+    "display": "fullscreen",
+    "orientation": "landscape",
+    "icons": [
+        {
+            "src": "src/bear_icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
