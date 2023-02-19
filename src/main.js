@@ -1,31 +1,88 @@
-
-
-
 var canvas = document.getElementById('renderCanvas');
-var engine = new BABYLON.Engine(canvas, true, {preserveDrawingBuffer: true, stencil: true}, false);
+var engine = new BABYLON.Engine(
+    canvas,
+    true,
+    {preserveDrawingBuffer: true, stencil: true},
+    false
+);
 
-// Create world
-var scene = new BABYLON.Scene(engine);
-scene.ambientColor = new BABYLON.Color3(1,1,1);
-
-const light = new BABYLON.DirectionalLight("light1", new BABYLON.Vector3(0.7, -1, 0), scene);
-var light2 = new BABYLON.HemisphericLight('light2', new BABYLON.Vector3(0, 1, 0), scene);
-light.autoCalcShadowZBounds = true;
-light2.intensity = 0.8;
-light2.specular = BABYLON.Color3.Black();
-const shadowGenerator = new BABYLON.ShadowGenerator(2048, light);
 
 
 
 var createScene = function(){
-    var camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 5, -15), scene);
-    camera.setTarget(BABYLON.Vector3.Zero(0,0,0));
-    camera.attachControl(canvas, false);
+    var scene = new BABYLON.Scene(engine);
+    scene.ambientColor = new BABYLON.Color3(1,1,1);
+    scene.enablePhysics();
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.collisionsEnabled = true;
+
+    const lightDir = new BABYLON.DirectionalLight(
+        "lightDir",
+        new BABYLON.Vector3(0.7, -1, 0),
+        scene
+    );
+    lightDir.autoCalcShadowZBounds = true;
+
+    const lightHemi = new BABYLON.HemisphericLight(
+        "lightHemi",
+        new BABYLON.Vector3(0, 1, 0),
+        scene
+    );
+    lightHemi.intensity = 0.8;
+    lightHemi.specular = BABYLON.Color3.Black();
+
+    const shadowGenerator = new BABYLON.ShadowGenerator(
+        2048, 
+        lightDir
+    );
     
+    var camera = new BABYLON.FollowCamera(
+        "camera1", 
+        new BABYLON.Vector3(0, 20, 0), 
+        scene
+    );
+    //camera.attachControl(canvas, true);
+    camera.heightOffset = 5;
+    camera.radius = 15;
+    camera.cameraAcceleration = 0.05;
+    
+
+
+
+    const MAP_SIZE = 100;
+    var ground = BABYLON.MeshBuilder.CreateGround(
+        "ground1",
+        { 
+            width: MAP_SIZE, 
+            height: MAP_SIZE, 
+            subdivisions: 2, 
+            updatable: false
+        },
+        scene
+    );
+    ground.material = new BABYLON.StandardMaterial(
+        "groundMat", 
+        scene
+    );
+    ground.material.diffuseColor = new BABYLON.Color3(0.5, 0.6, 1);
+    ground.receiveShadows = true;
+    ground.material.backFaceCulling = false; // REMOVE???
+    ground.physicsImpostor = new BABYLON.PhysicsImpostor(
+        ground,
+        BABYLON.PhysicsImpostor.BoxImpostor,
+        {
+            mass: 0
+        },
+        scene
+    );
+    ground.checkCollisions = true;
+
+
+
     const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 4, segments: 32}, scene);
     sphere.position.x = 3;
     sphere.position.z = -3;
-    sphere.position.y = 1;
+    sphere.position.y = 5;
     shadowGenerator.getShadowMap().renderList.push(sphere);
 
     var sphereMaterial = new BABYLON.StandardMaterial("sphereMaterial", scene);
@@ -33,24 +90,17 @@ var createScene = function(){
     sphereMaterial.diffuseColor = new BABYLON.Color3(0,0.5,1);
     sphere.material = sphereMaterial; 
     
-
-
+    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(
+        sphere,
+        BABYLON.PhysicsImpostor.SphereImpostor,
+        {
+            mass: 1,
+            //restitution: 2,
+        },
+        scene
+    );
+    sphere.checkCollisions = true; // !!!!!!!!
     
-    const MAP_SIZE = 100;
-
-    var ground = BABYLON.MeshBuilder.CreateGround("ground1", { 
-        width: MAP_SIZE, 
-        height: MAP_SIZE, 
-        subdivisions: 2, 
-        updatable: false }, scene);
-    const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-    groundMaterial.diffuseColor = BABYLON.Color3.FromHexString("#78a3b0");
-    ground.material = groundMaterial;
-    ground.receiveShadows = true;
-
-    
-
-
 
 
     // Append glTF model to scene.
@@ -59,6 +109,19 @@ var createScene = function(){
             const [root] = result.meshes;
             //console.log({result});
             shadowGenerator.addShadowCaster(root);
+
+            camera.lockedTarget = root;
+
+            // root.physicsImpostor = new BABYLON.PhysicsImpostor(
+            //     sphere,
+            //     BABYLON.PhysicsImpostor.SphereImpostor,
+            //     {
+            //         mass: 2,
+            //     },
+            //     scene
+            // );
+
+
 
             const playIdle = function(){
                 result.animationGroups.forEach((ag) => {
@@ -119,8 +182,8 @@ var createScene = function(){
             const pressedKeys = {};
 
             const keys = {
-                KeyW:1,
-                KeyS:-1,
+                KeyW:-1,
+                KeyS:1,
                 KeyA:-1,
                 KeyD:1,
             };
@@ -214,7 +277,7 @@ var createScene = function(){
         merged.isPickable = false;
         merged.checkCollisions = false;
         shadowGenerator.addShadowCaster(merged);
-        const COUNT = 100;
+        const COUNT = 25;
         const offset = 3;
         const max = (MAP_SIZE/2)-offset;
 
@@ -253,7 +316,7 @@ engine.runRenderLoop(function(){
 
 
 // show inspector
-scene.debugLayer.show();
+// scene.debugLayer.show();
 
 window.addEventListener('resize', function(){
     engine.resize();
