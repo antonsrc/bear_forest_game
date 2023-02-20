@@ -44,12 +44,12 @@ var createScene = function(){
     //camera.attachControl(canvas, true);
     camera.heightOffset = 5;
     camera.radius = 15;
-    camera.cameraAcceleration = 0.05;
+    camera.cameraAcceleration = 0.04;
     
 
 
 
-    const MAP_SIZE = 100;
+    const MAP_SIZE = 200;
     var ground = BABYLON.MeshBuilder.CreateGround(
         "ground1",
         { 
@@ -200,7 +200,7 @@ var createScene = function(){
 
             scene.onKeyboardObservable.add(eventData=>{
                 const code = eventData.event.code;
-                //console.log(eventData);
+                console.log(eventData);
                 const getKey = (c) => {
                     return !!pressedKeys[c] ? keys[c] : 0;
                 };
