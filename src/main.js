@@ -321,9 +321,3 @@ engine.runRenderLoop(function(){
 window.addEventListener('resize', function(){
     engine.resize();
 });
-
-
-// для PWA только
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-})
